@@ -1,0 +1,235 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ask Your Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#07080f;
+    --card:rgba(22,24,38,.72);
+    --line:rgba(255,255,255,.08);
+    --ink:#eef0ff;
+    --muted:#8b8da8;
+    --violet:#8b5cf6; --cyan:#22d3ee; --pink:#f472b6; --emerald:#34d399; --amber:#fbbf24; --blue:#60a5fa; --rose:#fb7185;
+    --radius:20px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Manrope',sans-serif;color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
+    background:var(--bg);padding:42px 20px 80px;
+  }
+  .orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:drift 18s ease-in-out infinite}
+  .orb.a{width:480px;height:480px;background:#7c3aed;left:-120px;top:-120px}
+  .orb.b{width:420px;height:420px;background:#0891b2;right:-100px;top:40px;animation-delay:-6s}
+  .orb.c{width:440px;height:440px;background:#db2777;left:30%;bottom:-160px;animation-delay:-11s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,30px) scale(1.08)}66%{transform:translate(-30px,20px) scale(.95)}}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:54px 54px;-webkit-mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 75%);mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 75%)}
+
+  .wrap{max-width:900px;margin:0 auto;position:relative;z-index:1}
+  header{text-align:center;margin-bottom:30px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:999px;padding:7px 16px;font-size:12.5px;font-weight:600;letter-spacing:.04em;color:#c4b5fd;
+    backdrop-filter:blur(10px);animation:fade .6s ease both}
+  .badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  h1{font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(38px,7vw,68px);line-height:1;margin:20px 0 12px;letter-spacing:-1.5px;
+    background:linear-gradient(100deg,#a78bfa 0%,#22d3ee 45%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:fade .6s .05s ease both}
+  .sub{color:var(--muted);font-size:16.5px;max-width:500px;margin:0 auto;line-height:1.55;animation:fade .6s .1s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .ask{margin-top:30px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;
+    backdrop-filter:blur(20px);box-shadow:0 30px 80px -40px rgba(124,58,237,.6),inset 0 1px 0 rgba(255,255,255,.06);animation:fade .6s .15s ease both}
+  .ask-row{display:flex;gap:12px}
+  textarea#q{flex:1;resize:none;min-height:58px;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;color:var(--ink);
+    font-family:'Manrope',sans-serif;font-size:16px;padding:16px 18px;line-height:1.4;outline:none;transition:border-color .2s,box-shadow .2s}
+  textarea#q:focus{border-color:rgba(139,92,246,.6);box-shadow:0 0 0 4px rgba(139,92,246,.15)}
+  textarea#q::placeholder{color:#5a5c75}
+  button.run{border:none;border-radius:14px;cursor:pointer;padding:0 28px;font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:#fff;
+    background:linear-gradient(135deg,#8b5cf6,#d946ef 60%,#22d3ee);background-size:160% 160%;box-shadow:0 12px 30px -10px rgba(168,85,247,.8);
+    transition:transform .1s,filter .2s,background-position .5s;white-space:nowrap}
+  button.run:hover{filter:brightness(1.08);background-position:100% 0}
+  button.run:active{transform:translateY(1px)}
+  button.run:disabled{opacity:.55;cursor:default}
+
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+  .chip{font-size:13.5px;font-weight:600;color:#cdd0ee;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:999px;
+    padding:9px 15px;cursor:pointer;transition:all .18s}
+  .chip:hover{color:#fff;border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.14);transform:translateY(-2px)}
+
+  .status{margin-top:22px;text-align:center;font-size:14px;font-weight:600;color:#a5a7c8}
+  .status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);margin-right:9px;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+  .result{margin-top:24px;display:none}.result.show{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;
+    backdrop-filter:blur(20px);box-shadow:0 24px 60px -40px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);
+    opacity:0;transform:translateY(16px);animation:rise .5s ease forwards}
+  .card:nth-child(2){animation-delay:.07s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card-head{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .card-head .tag{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;flex:none}
+  .card-head h3{margin:0;font-family:'Sora',sans-serif;font-weight:700;font-size:15px;letter-spacing:.01em}
+  pre.sql{margin:0;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;color:#b9d9ff;
+    background:rgba(0,0,0,.3);overflow-x:auto;white-space:pre-wrap}
+  pre.sql .kw{color:#c4b5fd;font-weight:500}
+  .explain{padding:16px 22px;color:var(--muted);font-size:14.5px;line-height:1.55}.explain b{color:#dfe2ff;font-weight:600}
+
+  /* tabbed results */
+  .tabs{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .tab{display:flex;align-items:center;gap:8px;font-family:'Sora',sans-serif;font-weight:700;font-size:13.5px;color:#9a9cc0;
+    background:transparent;border:1px solid transparent;border-radius:11px;padding:9px 16px;cursor:pointer;transition:all .16s}
+  .tab:hover{color:#fff}
+  .tab.active{color:#fff;background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.4);box-shadow:0 0 16px -6px rgba(139,92,246,.7)}
+  .tab .ic{font-size:15px}
+  .tab .rc{font-family:'JetBrains Mono',monospace;font-weight:400;font-size:11px;color:#6f7194}
+  .panel{display:none}.panel.active{display:block}
+  .table-scroll{overflow:auto;max-height:440px}
+  table{border-collapse:collapse;width:100%;font-size:14.5px}
+  thead th{position:sticky;top:0}
+  th,td{text-align:left;padding:13px 22px;white-space:nowrap}
+  th{font-family:'Sora',sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#a78bfa;
+    background:#181a28;border-bottom:1px solid var(--line)}
+  td{border-bottom:1px solid var(--line);color:#e4e6f7}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:rgba(139,92,246,.07)}
+  .rowcount{padding:12px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
+  .chart-wrap{padding:24px}canvas{max-height:400px}
+  .nochart{padding:40px 22px;text-align:center;color:#6f7194;font-size:14px}
+  footer{margin-top:32px;text-align:center;color:#4f5170;font-size:12.5px;letter-spacing:.03em}
+</style>
+
+<div class="orbs"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div></div>
+
+<div class="wrap">
+  <header>
+    <div class="badge"><span class="pulse"></span> AI Text-to-SQL Engine</div>
+    <h1>Ask your data anything</h1>
+    <p class="sub">Ask a question in plain English. The AI writes the SQL, runs it live, and visualizes the answer.</p>
+  </header>
+
+  <div class="ask">
+    <div class="ask-row">
+      <textarea id="q" placeholder="Which product category brought the most revenue?"></textarea>
+      <button class="run" id="run">Ask</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="result" id="result">
+    <div class="card">
+      <div class="card-head"><div class="tag" style="background:rgba(139,92,246,.18);color:#c4b5fd">⌘</div><h3>Generated SQL</h3></div>
+      <pre class="sql" id="sqlOut"></pre><div class="explain" id="explainOut"></div>
+    </div>
+
+    <div class="card" id="resultCard">
+      <div class="tabs">
+        <button class="tab" id="tabChart" data-tab="chart"><span class="ic">◴</span> Chart</button>
+        <button class="tab" id="tabTable" data-tab="table"><span class="ic">▦</span> Table <span class="rc" id="rowcount"></span></button>
+      </div>
+      <div class="panel" id="panelChart"><div class="chart-wrap"><canvas id="chart"></canvas></div></div>
+      <div class="panel" id="panelTable"><div class="table-scroll"><table id="tbl"></table></div></div>
+    </div>
+  </div>
+
+  <footer>Live SQLite · Gemini · Chart.js</footer>
+</div>
+
+<script>
+let chartObj=null;
+const VIVID=['#8b5cf6','#22d3ee','#f472b6','#34d399','#fbbf24','#60a5fa','#fb7185','#a78bfa','#2dd4bf','#c084fc'];
+const KW=['SELECT','FROM','WHERE','GROUP BY','ORDER BY','LEFT JOIN','INNER JOIN','JOIN','ON','LIMIT','SUM','COUNT','AVG','AS','DESC','ASC','HAVING','AND','OR','strftime'];
+function hl(s){let o=s;KW.forEach(k=>o=o.replace(new RegExp('\\b'+k.replace(' ','\\s+')+'\\b','gi'),m=>`<span class="kw">${m}</span>`));return o;}
+function table(cols,rows){let h='<thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>';rows.slice(0,300).forEach(r=>{h+='<tr>'+r.map(v=>`<td>${v===null?'—':(typeof v==='number'&&!Number.isInteger(v)?v.toLocaleString(undefined,{maximumFractionDigits:2}):(typeof v==='number'?v.toLocaleString():v))}</td>`).join('')+'</tr>';});document.getElementById('tbl').innerHTML=h+'</tbody>';document.getElementById('rowcount').textContent=rows.length+(rows.length===1?' row':' rows');}
+
+const glow={id:'glow',beforeDatasetsDraw(c){const x=c.ctx;x.save();x.shadowColor='rgba(139,92,246,.45)';x.shadowBlur=18;},afterDatasetsDraw(c){c.ctx.restore();}};
+
+// returns true if a chart was drawn
+function chart(cols,rows,c){
+  if(!c||c.type==='none'||rows.length<2)return false;
+  const li=cols.indexOf(c.labelCol), vi=cols.indexOf(c.valueCol);
+  if(li<0||vi<0)return false;
+  const labels=rows.map(r=>String(r[li])), vals=rows.map(r=>Number(r[vi]));
+  if(vals.some(isNaN))return false;
+  if(chartObj)chartObj.destroy();
+  const cv=document.getElementById('chart'), g=cv.getContext('2d');
+  const t=c.type, horizontal=(t==='hbar'); let ctype, dataset, plugins=[];
+  if(t==='line'||t==='area'){
+    ctype='line';
+    const stroke=g.createLinearGradient(0,0,cv.width,0);stroke.addColorStop(0,'#8b5cf6');stroke.addColorStop(.5,'#22d3ee');stroke.addColorStop(1,'#f472b6');
+    const fill=g.createLinearGradient(0,0,0,360);fill.addColorStop(0,'rgba(34,211,238,.35)');fill.addColorStop(1,'rgba(139,92,246,0)');
+    dataset={data:vals,label:c.valueCol,borderColor:stroke,backgroundColor:fill,fill:true,tension:.4,borderWidth:3.5,
+      pointRadius:4,pointHoverRadius:8,pointBackgroundColor:'#fff',pointBorderColor:'#f472b6',pointBorderWidth:2.5};
+    plugins=[glow];
+  } else if(t==='pie'||t==='doughnut'){
+    ctype='doughnut';
+    dataset={data:vals,backgroundColor:VIVID,borderColor:'rgba(7,8,15,.9)',borderWidth:3,hoverOffset:10};
+  } else {
+    ctype='bar';
+    const bg=labels.map((_,i)=>{const base=VIVID[i%VIVID.length];if(horizontal)return base;const gr=g.createLinearGradient(0,0,0,360);gr.addColorStop(0,base);gr.addColorStop(1,base+'55');return gr;});
+    dataset={data:vals,label:c.valueCol,backgroundColor:bg,borderRadius:10,borderSkipped:false,maxBarThickness:46};
+    plugins=[glow];
+  }
+  const isPie=(ctype==='doughnut');
+  chartObj=new Chart(cv,{
+    type:ctype,data:{labels,datasets:[dataset]},plugins,
+    options:{
+      indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,layout:{padding:6},
+      plugins:{legend:{display:isPie,position:'bottom',labels:{font:{family:'Manrope',weight:'600'},color:'#b6b8d4',padding:16,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{backgroundColor:'rgba(12,14,24,.95)',titleColor:'#fff',bodyColor:'#c8cae8',borderColor:'rgba(139,92,246,.4)',borderWidth:1,
+          titleFont:{family:'Sora',weight:'700'},bodyFont:{family:'Manrope'},padding:12,cornerRadius:12,displayColors:false}},
+      scales:isPie?{}:{
+        x:{ticks:{font:{family:'Manrope',weight:'600'},color:'#8b8da8'},grid:{color:'rgba(255,255,255,.05)',display:horizontal},border:{display:false}},
+        y:{ticks:{font:{family:'JetBrains Mono'},color:'#9a9cc0'},grid:{color:'rgba(255,255,255,.05)',display:!horizontal},border:{display:false}}
+      },
+      animation:{duration:850,easing:'easeOutQuart'}
+    }
+  });
+  return true;
+}
+
+function setTab(name){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.getElementById('panelChart').classList.toggle('active',name==='chart');
+  document.getElementById('panelTable').classList.toggle('active',name==='table');
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+
+async function run(){
+  const q=document.getElementById('q').value.trim(); if(!q)return;
+  const st=document.getElementById('status'),res=document.getElementById('result'),btn=document.getElementById('run');
+  btn.disabled=true; res.classList.remove('show'); st.innerHTML='<span class="dot"></span>Generating SQL…';
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+    const d=await r.json();
+    if(d.error){st.textContent='';res.classList.add('show');
+      document.getElementById('sqlOut').innerHTML=d.sql?hl(d.sql):'—';document.getElementById('explainOut').innerHTML='';
+      document.getElementById('tbl').innerHTML='';document.getElementById('rowcount').innerHTML='<span style="color:#fb7185">⚠ '+d.error+'</span>';
+      document.getElementById('tabChart').style.display='none';setTab('table');}
+    else{
+      document.getElementById('sqlOut').innerHTML=hl(d.sql);
+      document.getElementById('explainOut').innerHTML='<b>What this does:</b> '+(d.explanation||'');
+      table(d.columns,d.rows);
+      const drawn=chart(d.columns,d.rows,d.chart);
+      document.getElementById('tabChart').style.display=drawn?'':'none';
+      setTab(drawn?'chart':'table');   // default to the visualization
+      st.textContent='';res.classList.add('show');
+    }
+  }catch(e){st.textContent='Request failed: '+e.message;}
+  btn.disabled=false;
+}
+
+['Revenue by category','Monthly revenue trend','Top 10 products by revenue','Sales share by category','Top 10 countries by sales','Average freight by country']
+  .forEach(e=>{const c=document.createElement('button');c.className='chip';c.textContent=e;c.onclick=()=>{document.getElementById('q').value=e;run();};document.getElementById('chips').appendChild(c);});
+document.getElementById('run').onclick=run;
+document.getElementById('q').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();run();}});
+</script>
