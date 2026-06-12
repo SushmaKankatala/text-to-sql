@@ -1,4 +1,4 @@
-# Ask Your Data — AI Analytics Tool
+# Ask Your Data — AI Analytics Assistant
 
 Ask questions about an e-commerce database in plain English. An AI model writes the SQL, runs it against a live database, and returns the answer as a table **and** an automatic visualization.
 
